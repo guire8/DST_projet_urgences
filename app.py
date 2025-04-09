@@ -24,6 +24,13 @@ st.title("🚑 Plateforme Urgences - Prédictions ML")
 tabs = st.tabs(["Temps d'attente", "Estimation par moyenne", "Risque d'hospitalisation"])
 
 # Onglet 1 : Temps d'attente
+from PIL import Image
+# Charger une image avec PIL
+image = Image.open("chemin/vers/votre/image.jpg")
+
+# Afficher l'image dans Streamlit
+st.image(image, caption="Image chargée avec PIL", use_column_width=True)
+
 with tabs[0]:
     st.header("⏱️ Prédiction du temps d'attente")
 
