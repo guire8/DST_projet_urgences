@@ -249,20 +249,22 @@ with tab4:
 
     df_moy = preprocess_common(df_raw.copy())
 
+    jour_mapping = {
+        "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
+        "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"
+    }
+    
     import holidays
     fr_holidays = holidays.FR()
     df_moy["Date"] = df_moy["Date_Heure_Entree_Sejour"].dt.day
     df_moy["Mois"] = df_moy["Date_Heure_Entree_Sejour"].dt.month
     df_moy["jour_ferie"] = df_moy["Date_Heure_Entree_Sejour"].dt.date.isin(fr_holidays).astype(int)
-    df_moy["Jour_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.day_name(locale="fr_FR").str.capitalize()
+    df_moy["Jour_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.day_name().map(jour_mapping)
 
     nb_jours = df_moy["Date_Heure_Entree_Sejour"].dt.date.nunique()
 
     now = datetime.now()
-    jour_mapping = {
-        "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
-        "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"
-    }
+
     jour_defaut = jour_mapping[now.strftime("%A")]
     date_defaut = now.day
     mois_defaut = now.month
