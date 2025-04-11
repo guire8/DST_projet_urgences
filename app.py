@@ -4,6 +4,7 @@ import numpy as np
 import joblib
 from datetime import datetime, timedelta
 from random import randint
+from zoneinfo import ZoneInfo
 import plotly.express as px
 from utils.preprocessing import (
     preprocess_common,
@@ -75,7 +76,7 @@ def formulaire(df_base, form_key_prefix=""):
     motif = st.selectbox("Motif de recours", motifs, key=f"{form_key_prefix}_motif")
 
     # PEC IOA avec valeur actuelle par défaut
-    now = datetime.now()
+    now = datetime.now(ZoneInfo("Europe/Paris"))
     date_ioa = st.date_input("Date PEC IOA", now.date(), key=f"{form_key_prefix}_date_ioa")
     heure_ioa = st.time_input("Heure PEC IOA", now.time(), key=f"{form_key_prefix}_heure_ioa")
     datetime_ioa = datetime.combine(date_ioa, heure_ioa)
@@ -106,7 +107,7 @@ with tab2:
 
     with st.form("form_temps_attente"):
         col1, col2 = st.columns(2)
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("Europe/Paris"))
 
         with col1:
             date_entree = st.date_input("Date d'entrée", value=now.date(), key="attente_date")
@@ -153,7 +154,7 @@ with tab3:
 
     with st.form("form_hospitalisation"):
         col1, col2 = st.columns(2)
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("Europe/Paris"))
         heure_defaut = (now - timedelta(minutes=20)).time()
 
         with col1:
@@ -248,6 +249,17 @@ with tab4:
     st.title("📈 Estimation simple par moyenne")
 
     df_moy = preprocess_common(df_raw.copy())
+    from zoneinfo import ZoneInfo
+
+    # Si timezone absente, on suppose UTC
+    if df_moy["Date_Heure_Entree_Sejour"].dt.tz is None:
+        df_moy["Date_Heure_Entree_Sejour"] = df_moy["Date_Heure_Entree_Sejour"].dt.tz_localize("UTC")
+
+    # Conversion en Europe/Paris
+    df_moy["Date_Heure_Entree_Sejour"] = df_moy["Date_Heure_Entree_Sejour"].dt.tz_convert("Europe/Paris")
+
+    # On recalcule l'heure d'entrée avec le bon fuseau
+    df_moy["Heure_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.hour
 
     jour_mapping = {
         "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
@@ -263,7 +275,7 @@ with tab4:
 
     nb_jours = df_moy["Date_Heure_Entree_Sejour"].dt.date.nunique()
 
-    now = datetime.now()
+    now = datetime.now(ZoneInfo("Europe/Paris"))
 
     jour_defaut = jour_mapping[now.strftime("%A")]
     date_defaut = now.day
