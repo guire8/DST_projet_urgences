@@ -249,16 +249,13 @@ with tab4:
     st.title("📈 Estimation simple par moyenne")
 
     df_moy = preprocess_common(df_raw.copy())
-    from zoneinfo import ZoneInfo
+    rom zoneinfo import ZoneInfo
 
-    # Si timezone absente, on suppose UTC
-    if df_moy["Date_Heure_Entree_Sejour"].dt.tz is None:
-        df_moy["Date_Heure_Entree_Sejour"] = df_moy["Date_Heure_Entree_Sejour"].dt.tz_localize("UTC")
-
-    # Conversion en Europe/Paris
+    # Conversion forcée UTC → Europe/Paris
+    df_moy["Date_Heure_Entree_Sejour"] = pd.to_datetime(df_moy["Date_Heure_Entree_Sejour"], utc=True)
     df_moy["Date_Heure_Entree_Sejour"] = df_moy["Date_Heure_Entree_Sejour"].dt.tz_convert("Europe/Paris")
 
-    # On recalcule l'heure d'entrée avec le bon fuseau
+    # Recalcul de l'heure locale pour les graphes
     df_moy["Heure_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.hour
 
     jour_mapping = {
