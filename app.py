@@ -249,7 +249,7 @@ with tab4:
     st.title("📈 Estimation simple par moyenne")
 
     df_moy = preprocess_common(df_raw.copy())
-    rom zoneinfo import ZoneInfo
+    from zoneinfo import ZoneInfo
 
     # Conversion forcée UTC → Europe/Paris
     df_moy["Date_Heure_Entree_Sejour"] = pd.to_datetime(df_moy["Date_Heure_Entree_Sejour"], utc=True)
