@@ -63,6 +63,179 @@ with tab1:
     fig_missing = px.bar(missing, x="Colonne", y="Taux de valeurs manquantes", title="Taux de valeurs manquantes")
     st.plotly_chart(fig_missing)
 
+    import plotly.graph_objects as go
+
+     # Calcul des pourcentages de séjours avec valeurs manquantes
+    pourcent_sortie_sejour = (
+        df_cleaned[df_cleaned["Date_Heure_Sortie_Urgences"].isna()]
+        .groupby(df_cleaned["Date_Heure_Entree_Sejour"].dt.year)
+        .size()
+        / df_cleaned.groupby(df_cleaned["Date_Heure_Entree_Sejour"].dt.year).size()
+        * 100
+    )
+
+    pourcent_PEC_MED = (
+        df_cleaned[df_cleaned["Date_Heure_PEC_MED"].isna()]
+        .groupby(df_cleaned["Date_Heure_Entree_Sejour"].dt.year)
+        .size()
+        / df_cleaned.groupby(df_cleaned["Date_Heure_Entree_Sejour"].dt.year).size()
+        * 100
+    )
+
+    pourcent_PEC_IOA = (
+        df_cleaned[df_cleaned["Date_Heure_PEC_IOA"].isna()]
+        .groupby(df_cleaned["Date_Heure_Entree_Sejour"].dt.year)
+        .size()
+        / df_cleaned.groupby(df_cleaned["Date_Heure_Entree_Sejour"].dt.year).size()
+        * 100
+    )
+
+    # Création du graphique Plotly
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=pourcent_sortie_sejour.index,
+            y=pourcent_sortie_sejour.values,
+            mode="lines+markers",
+            name="Sortie Séjour Manquant",
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=pourcent_PEC_MED.index,
+            y=pourcent_PEC_MED.values,
+            mode="lines+markers",
+            name="PEC MED Manquant",
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=pourcent_PEC_IOA.index,
+            y=pourcent_PEC_IOA.values,
+            mode="lines+markers",
+            name="PEC IOA Manquant",
+        )
+    )
+
+    # Mise à jour de la mise en page du graphique
+    fig.update_layout(
+        title_text="Pourcentage de Séjours avec Valeurs Manquantes par Année",
+        xaxis_title="Année",
+        yaxis_title="Pourcentage (%)",
+        height=600,
+        width=800,
+    )
+
+    # Affichage dans Streamlit
+    st.title("Analyse des Séjours avec Valeurs Manquantes")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Analyse de l'impact de la dispersion entre 2021_2024 et 2023_2024
+    #Creation de dataset pour 2023-2024 et 2021-2024 :
+    df_2324 = df_cleaned[df_cleaned['Date_Heure_Entree_Sejour'].dt.year.isin([2023,2024])]
+    df_2124 = df_cleaned[df_cleaned['Date_Heure_Entree_Sejour'].dt.year.isin([2021,2022,2023,2024])]
+    
+    from plotly.subplots import make_subplots
+   
+
+    fig = make_subplots(rows=1, cols=8, shared_xaxes=True)
+
+    # Trace des boxplots pour les 4 durees
+    df_2124['Duree_totale_heure'] = pd.to_timedelta(df_2124['Duree_totale_heure'], unit='h')
+    df_2324['Duree_totale_heure'] = pd.to_timedelta(df_2324['Duree_totale_heure'], unit='h')
+
+    df_2124['Delai_entree_IOA_heure'] = pd.to_timedelta(df_2124['Delai_entree_IOA_heure'], unit='h')
+    df_2324['Delai_entree_IOA_heure'] = pd.to_timedelta(df_2324['Delai_entree_IOA_heure'], unit='h')
+
+    df_2124['Delai_IOA_MED_heure'] = pd.to_timedelta(df_2124['Delai_IOA_MED_heure'], unit='h')
+    df_2324['Delai_IOA_MED_heure'] = pd.to_timedelta(df_2324['Delai_IOA_MED_heure'], unit='h')
+
+    df_2124['Delai_MED_sortie_heure'] = pd.to_timedelta(df_2124['Delai_MED_sortie_heure'], unit='h')
+    df_2324['Delai_MED_sortie_heure'] = pd.to_timedelta(df_2324['Delai_MED_sortie_heure'], unit='h')
+    fig.add_trace(go.Box(y=(df_2124['Duree_totale_heure'].dt.total_seconds() / 3600).round(3), name='Duree_totale 2124'), row=1, col=1)
+    fig.add_trace(go.Box(y=(df_2324['Duree_totale_heure'].dt.total_seconds()/3600).round(3), name='Duree_Totale 2324'), row=1, col=2)
+
+    fig.add_trace(go.Box(y=(df_2124['Delai_entree_IOA_heure'].dt.total_seconds()/3600).round(3), name='Delai_entree_IOA 2124'), row=1, col=3)
+    fig.add_trace(go.Box(y=(df_2324['Delai_entree_IOA_heure'].dt.total_seconds()/3600).round(3), name='Delai_entree_IOA 2324'), row=1, col=4)
+
+    fig.add_trace(go.Box(y=(df_2124['Delai_IOA_MED_heure'].dt.total_seconds()/3600).round(3), name='Delai_IOA_MED 2124'), row=1, col=5)
+    fig.add_trace(go.Box(y=(df_2324['Delai_IOA_MED_heure'].dt.total_seconds()/3600).round(3), name='Delai_IOA_MED 2324'), row=1, col=6)
+
+    fig.add_trace(go.Box(y=(df_2124['Delai_MED_sortie_heure'].dt.total_seconds()/3600).round(3), name='Delai_MED_sortie 2124'), row=1, col=7)
+    fig.add_trace(go.Box(y=(df_2324['Delai_MED_sortie_heure'].dt.total_seconds()/3600).round(3), name='Delai_MED_sortie 2324'), row=1, col=8)
+
+    fig.update_layout(height=600, width=1600, title_text="Boxplots des Durees aux Urgences (en heures) / Impact des valeurs aberrantes et outliers", title_x= 0.5)
+
+
+    fig.add_annotation(
+        x= 0.05,  # Coordonnee x negative pour aller à gauche
+        y=1.08,  # Coordonnee y au centre vertical
+        text="Duree entre Entree et Sortie Urgence",  # Texte
+        showarrow=False,
+        font=dict(size=14, color="white"),
+        xref="paper",
+        yref="paper",
+        textangle=0  # Texte incline verticalement
+    )
+
+    fig.add_annotation(
+        x= 0.38,  # Coordonnee x negative pour aller à gauche
+        y=1.08,  # Coordonnee y au centre vertical
+        text="Duree entre Entree et PEC IOA",  # Texte
+        showarrow=False,
+        font=dict(size=14, color="white"),
+        xref="paper",
+        yref="paper",
+        textangle=0  # Texte incline verticalement
+    )
+
+    fig.add_annotation(
+        x= 0.63,  # Coordonnee x negative pour aller à gauche
+        y=1.08,  # Coordonnee y au centre vertical
+        text="Duree entre PEC IOA et PEC MED",  # Texte
+        showarrow=False,
+        font=dict(size=14, color="white"),
+        xref="paper",
+        yref="paper",
+        textangle=0  # Texte incline verticalement
+    )
+
+    fig.add_annotation(
+        x= 0.98,  # Coordonnee x negative pour aller à gauche
+        y=1.08,  # Coordonnee y au centre vertical
+        text="Duree entre PEC MED et Sortie",  # Texte
+        showarrow=False,
+        font=dict(size=14, color="white"),
+        xref="paper",
+        yref="paper",
+        textangle=0  # Texte incline verticalement
+    )
+
+
+    # Mise à jour des echelles des axes Y
+    fig.update_layout(
+        height=600,
+        width=1600,
+        title_text="Boxplots des Durees aux Urgences (en heures) / Impact des valeurs aberrantes et outliers",
+        title_x=0.5,
+        yaxis=dict(range=[0, 30]),  # Pour le premier subplot
+        yaxis2=dict(range=[0, 30]),  # Pour le deuxième subplot
+        yaxis3=dict(range=[0, 30]),  # Pour le troisième subplot
+        yaxis4=dict(range=[0, 30]),   # Pour le quatrième subplot
+        yaxis5=dict(range=[0, 30]),   # Pour le cinquième subplot
+        yaxis6=dict(range=[0, 30]),   # Pour le sixième subplot
+        yaxis7=dict(range=[0, 30]),   # Pour le septième subplot
+        yaxis8=dict(range=[0, 30])
+    )
+
+
+    # Affichage dans Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def formulaire(df_base, form_key_prefix=""):
     date_entree = st.date_input("Date d'entrée", key=f"{form_key_prefix}_date_entree")
     heure_entree = st.time_input("Heure d'entrée", key=f"{form_key_prefix}_heure_entree")
