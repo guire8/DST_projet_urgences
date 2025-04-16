@@ -320,6 +320,31 @@ with tab2:
         pred = model.predict(df_input)[0]
         st.success(f"Temps total estimé avant la sortie: {round(pred, 1)} heures")
 
+    # Comparaison des modèles de régression
+    data = {
+        "Modèle": [
+            "Gradient Boosting Regressor",
+            "Gradient Boosting Regressor_huber",
+            "XGBoost Regressor",
+            "CatBoost Regressor",
+            "Random_Forest",
+            "Linear Regression"
+        ],
+        "RMSE": [5.21, 5.23, 5.10, 5.41, 5.01, 5.27],
+        "MAE": [3.73, 3.61, 3.65, 3.96, 3.58, 3.83],
+        "MAPE (%)": [65.7, 59.2, 63.8, 81.0, 67.8, 71.1],
+        "R²": [0.4, 0.4, 0.4, 0.4, 0.5, 0.4],
+        "Cross-Val Score": [0.405, 0.395, 0.421, 0.359, 0.431, 0.388]
+    }
+    
+    # Création du DataFrame
+    df = pd.DataFrame(data)
+    
+    # Affichage dans Streamlit
+    st.title("Comparaison des modèles de régression")
+    st.dataframe(df, use_container_width=True)
+
+
 
 
 with tab3:
