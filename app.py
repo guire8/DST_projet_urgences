@@ -437,9 +437,6 @@ with tab2:
 
     # Affichage Image du Gradient Boosting Regressor
     image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
-
-    ## Afficher image Regression Models plotting
-    # Charger une image avec PIL
     image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
 
     ## Afficher l'image dans Streamlit
@@ -461,6 +458,7 @@ with tab2:
     st.dataframe(df)
 
     # Affichage Image du Gradient Boosting Regressor
+    image_regression_plotting = Image.open("Images/Graphe_Hybride.png")
     image_regression_plotting = Image.open("Images/Graphe_Hybride.png")
     st.image(Graphe_Hybride, caption="Image chargée avec PIL", use_container_width=True)
 
