@@ -103,47 +103,7 @@ with tab1:
 
     st.plotly_chart(fig_motif, use_container_width=True)
 
-    # 🔥 Carte thermique des arrivées - version améliorée
-    st.subheader("2. Carte thermique des arrivées")
-
-    # Préparer les données groupées
-    heatmap_data = df_cleaned.groupby(["Jour", "Heure_Entree"]).size().reset_index(name="count")
-
-    # Mapper les jours pour qu’ils soient affichés correctement dans l'ordre
-    jours_mapping = {
-        0: "Lundi", 1: "Mardi", 2: "Mercredi", 3: "Jeudi",
-        4: "Vendredi", 5: "Samedi", 6: "Dimanche"
-    }
-    heatmap_data["JourNom"] = heatmap_data["Jour"].map(jours_mapping)
-
-    # Création de la heatmap Plotly
-    fig_heatmap = px.density_heatmap(
-        heatmap_data,
-        x="Heure_Entree",
-        y="JourNom",
-        z="count",
-        color_continuous_scale="RdBu_r",  # proche de coolwarm
-        title="Carte thermique des arrivées par jour et heure",
-        nbinsx=24,
-        category_orders={"JourNom": ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]}
-    )
-
-    fig_heatmap.update_layout(
-        xaxis=dict(
-            title="Heure de la journée",
-            tickmode="linear",
-            tick0=0,
-            dtick=1
-        ),
-        xaxis_title="Heure de la journée",
-        yaxis_title="Jour de la semaine",
-        height=600,
-        width=1200,
-        margin=dict(l=40, r=40, t=50, b=40)
-    )
-    st.plotly_chart(fig_heatmap, use_container_width=False)
-
-#Temps d'attente et variable 
+    #Temps d'attente et variable 
     bins = [0, 18, 30, 60, 80, 120]
     labels = ['0-18', '19-30', '31-60', '61-80', '81-120']
     df_cleaned['age'] = pd.cut(df_cleaned['Age_Moyen_Sejour_Annees'], bins=bins, labels=labels, right=True)
@@ -197,7 +157,49 @@ with tab1:
             fig.update_layout(xaxis_tickangle=40)
         st.plotly_chart(fig, use_container_width=True)
 
+    # 🔥 Carte thermique des arrivées - version améliorée
+    st.subheader("2. Carte thermique des arrivées")
+
+    # Préparer les données groupées
+    heatmap_data = df_cleaned.groupby(["Jour", "Heure_Entree"]).size().reset_index(name="count")
+
+    # Mapper les jours pour qu’ils soient affichés correctement dans l'ordre
+    jours_mapping = {
+        0: "Lundi", 1: "Mardi", 2: "Mercredi", 3: "Jeudi",
+        4: "Vendredi", 5: "Samedi", 6: "Dimanche"
+    }
+    heatmap_data["JourNom"] = heatmap_data["Jour"].map(jours_mapping)
+
+    # Création de la heatmap Plotly
+    fig_heatmap = px.density_heatmap(
+        heatmap_data,
+        x="Heure_Entree",
+        y="JourNom",
+        z="count",
+        color_continuous_scale="RdBu_r",  # proche de coolwarm
+        title="Carte thermique des arrivées par jour et heure",
+        nbinsx=24,
+        category_orders={"JourNom": ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]}
+    )
+
+    fig_heatmap.update_layout(
+        xaxis=dict(
+            title="Heure de la journée",
+            tickmode="linear",
+            tick0=0,
+            dtick=1
+        ),
+        xaxis_title="Heure de la journée",
+        yaxis_title="Jour de la semaine",
+        height=600,
+        width=1200,
+        margin=dict(l=40, r=40, t=50, b=40)
+    )
+    st.plotly_chart(fig_heatmap, use_container_width=False)
+
+
     #Matrice de corrélation 
+    st.subheader("3. Matrice de corrélation ")
     numeric_df = df_cleaned.select_dtypes(include=np.number)
     cor = numeric_df.corr(method='spearman')
     mask = np.tril(np.ones_like(cor, dtype=bool))
@@ -207,7 +209,7 @@ with tab1:
     st.plotly_chart(fig, use_container_width=True)
 
     
-    st.subheader("3. Analyse des valeurs manquantes")
+    st.subheader("4. Analyse des valeurs manquantes")
     missing = df_raw.isnull().mean().sort_values(ascending=False).reset_index()
     missing.columns = ["Colonne", "Taux de valeurs manquantes"]
     fig_missing = px.bar(missing, x="Colonne", y="Taux de valeurs manquantes", title="Taux de valeurs manquantes")
