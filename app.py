@@ -457,8 +457,12 @@ with tab2:
     
     df = pd.DataFrame(data)
     
-    st.title("Gradient Boosting Regressor : Résultats par intervalle")
+    st.title("Modèle Hybride : Moyenne et Gradient Boosting Regressor")
     st.dataframe(df)
+
+    # Affichage Image du Gradient Boosting Regressor
+    image_regression_plotting = Image.open("Images/Graphe_Hybride.png")
+    st.image(Graphe_Hybride, caption="Image chargée avec PIL", use_container_width=True)
 
 df_comparatif_models = pd.DataFrame({
     "Modèle": [
