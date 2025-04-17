@@ -7,6 +7,7 @@ from random import randint
 from zoneinfo import ZoneInfo
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from PIL import Image
 from sklearn.metrics import (
     f1_score, recall_score, precision_score, accuracy_score,
@@ -58,7 +59,7 @@ with tab1:
         x="Age_Moyen_Sejour_Annees",
         nbins=15,
         title="Distribution de l'âge",
-        color_discrete_sequence=["#6c2b6d"]
+        color_discrete_sequence=["#8c564b"]
     )
     fig_age.update_layout(yaxis_title="Nombre de séjours", bargap=0.05)
 
@@ -71,7 +72,8 @@ with tab1:
         x="Tri_IOA",
         y="count",
         title="Distribution du Tri_IOA",
-        color_discrete_sequence=colors
+        color = 'Tri_IOA'
+        color_discrete_sequence=px.colors.qualitative.T10,
     )
     fig_tri.update_layout(yaxis_title="Nombre de séjours")
 
@@ -84,7 +86,8 @@ with tab1:
         x="Motif_de_recours",
         y="count",
         title="Répartition des motifs de recours",
-        color_discrete_sequence=colors
+        color='Motif_de_recours',
+        color_discrete_sequence=px.colors.qualitative.T10
     )
     fig_motif.update_layout(
         yaxis_title="Nombre de séjours",
@@ -140,6 +143,70 @@ with tab1:
     )
     st.plotly_chart(fig_heatmap, use_container_width=False)
 
+#Temps d'attente et variable 
+    bins = [0, 18, 30, 60, 80, 120]
+    labels = ['0-18', '19-30', '31-60', '61-80', '81-120']
+    df_cleaned['age'] = pd.cut(df_cleaned['Age_Moyen_Sejour_Annees'], bins=bins, labels=labels, right=True)
+
+    colonnes_timedelta = [
+        'Duree_totale_heure',
+        'Delai_entree_IOA_heure',
+        'Delai_entree_MED_heure'
+    ]
+
+    for col in colonnes_timedelta:
+        df_cleaned[col] = pd.to_timedelta(df_cleaned[col], errors='coerce')
+
+    df = df_cleaned[df_cleaned['Delai_entree_IOA_heure'] > pd.Timedelta(minutes=0)].copy()
+
+    # Mapping pour les noms clairs dans l'interface
+    categorie_options = {
+        'Âge': 'age',
+        'Tri IOA': 'Tri_IOA',
+        'Motif de recours': 'Motif_de_recours'
+    }
+
+    categorie_affichee = st.selectbox("Choisir la variable de regroupement :", list(categorie_options.keys()))
+    categorie = categorie_options[categorie_affichee]
+
+    delais = {
+        'Délai entre entrée et IOA (h)': 'Delai_entree_IOA_heure',
+        'Délai entre entrée et médecin (h)': 'Delai_entree_MED_heure',
+        'Durée totale (h)': 'Duree_totale_heure',}
+
+
+    for i, (titre, colonne) in enumerate(delais.items(), 1):
+        fig = px.box(
+            df,
+            x=categorie,
+            y=colonne,
+            points=False,
+            title=titre,
+            color_discrete_sequence=['#6c2b6d', '#d14a61', '#8f3371'], 
+            category_orders={
+        'age': ['0-18', '19-30', '31-60', '61-80', '81-120'], 
+        'Tri_IOA': ['Tri 1', 'Tri 2', 'Tri 3A', 'Tri 3B', 'Tri 4', 'Tri 5']
+    }
+        )
+        fig.update_layout(
+            xaxis_title=categorie_affichee,
+            yaxis_title="Heures",
+            height=400
+        )
+        if categorie == 'Motif_de_recours':
+            fig.update_layout(xaxis_tickangle=40)
+        st.plotly_chart(fig, use_container_width=True)
+
+    #Matrice de corrélation 
+    numeric_df = df_cleaned.select_dtypes(include=np.number)
+    cor = numeric_df.corr(method='spearman')
+    mask = np.tril(np.ones_like(cor, dtype=bool))
+    cor_masked = cor.where(mask)
+    fig = px.imshow(cor_masked, aspect="auto", title="Matrice de corrélation", color_continuous_scale="RdBu")
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    
     st.subheader("3. Analyse des valeurs manquantes")
     missing = df_raw.isnull().mean().sort_values(ascending=False).reset_index()
     missing.columns = ["Colonne", "Taux de valeurs manquantes"]
@@ -1268,8 +1335,8 @@ with tab4:
 
     col1, col2, col3 = st.columns(3)
     col1.metric("🩺 IOA", f"{int(res['IOA_moy']*60)} ± {int(res['IOA_std']*60)} min")
-    col2.metric("👨‍⚕️ Médecin", f"{int(res['MED_moy']*60)} ± {int(res['MED_std']*60)} min")
-    col3.metric("🚪 Sortie", f"{int(res['TOT_moy']*60)} ± {int(res['TOT_std']*60)} min")
+    col2.metric("👨‍⚕️ Médecin", f"{int(res['MED_moy'])} ± {int(res['MED_std'])} heures")
+    col3.metric("🚪 Sortie", f"{int(res['TOT_moy'])} ± {int(res['TOT_std'])} heures")
 
     # Données affluence non filtrées
     df_affluence = df_moy.groupby("Heure_Entree").agg(
@@ -1280,7 +1347,7 @@ with tab4:
     # Données durées filtrées
     df_graph = res["filtered_df"].dropna(subset=["Duree_totale_heure"])
     df_duree = df_graph.groupby("Heure_Entree").agg(
-        Duree_moy_min=("Duree_totale_heure", lambda x: x.mean() * 60)
+        Duree_moy_min=("Duree_totale_heure", lambda x: x.mean())
     ).reset_index()
 
     # Fusion
@@ -1307,7 +1374,7 @@ with tab4:
         x=df_plot["Heure_affichage"],
         y=df_plot["Duree_moy_min"],
         mode="lines+markers",
-        name="Durée moyenne (min)",
+        name="Durée moyenne (heure)",
         line=dict(color="crimson", width=3),
         legendrank=1
     ))
@@ -1315,7 +1382,7 @@ with tab4:
     fig.update_layout(
         title="📊 Durée moyenne de passage et affluence pour les paramètres sélectionnés",
         xaxis=dict(title="Tranche horaire", tickmode="array", tickvals=df_plot["Heure_affichage"], ticktext=df_plot["Heure_affichage"], tickangle=0),
-        yaxis=dict(title="Durée moyenne (min)"),
+        yaxis=dict(title="Durée moyenne (heure)"),
         yaxis2=dict(title="Entrées moyennes", overlaying="y", side="right", range=[0, 8], layer="below traces"),
         legend=dict(x=0.01, y=0.99),
         bargap=0.2,
