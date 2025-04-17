@@ -434,6 +434,16 @@ with tab2:
     st.title("Comparaison des modèles de régression")
     st.dataframe(df, use_container_width=True)
 
+    # Affichage Image du Gradient Boosting Regressor
+    image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
+
+    ## Afficher image Regression Models plotting
+    # Charger une image avec PIL
+    image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
+
+    ## Afficher l'image dans Streamlit
+    st.image(image_regression_plotting, caption="Image chargée avec PIL", use_column_width=True)
+
     # Tableau évaluation du modèle Gradient Boosting Regressor par échantillonage
     data = {
         "Intervalle": ["[0,2)", "[2,4)", "[4,7)", "[7,10)", "[10,20)", "[20,inf)"],
