@@ -434,7 +434,20 @@ with tab2:
     st.title("Comparaison des modèles de régression")
     st.dataframe(df, use_container_width=True)
 
-
+    # Tableau évaluation du modèle Gradient Boosting Regressor par échantillonage
+    data = {
+        "Intervalle": ["[0,2)", "[2,4)", "[4,7)", "[7,10)", "[10,20)", "[20,inf)"],
+        "RMSE": [3.439739, 3.504804, 3.634573, 3.483057, 4.704146, 12.043832],
+        "MAE": [2.648889, 2.581257, 2.873533, 2.759772, 3.754326, 11.115633],
+        "MAPE (%)": [254.858621, 89.061865, 54.482740, 33.227294, 26.734510, 43.816827],
+        "R²": [-53.812927, -36.648371, -16.827149, -16.165165, -1.720196, -11.406252],
+        "Cross-Val Score": [0.404729, 0.404721, 0.404784, 0.404736, 0.404801, 0.404786]
+    }
+    
+    df = pd.DataFrame(data)
+    
+    st.title("Gradient Boosting Regressor : Résultats par intervalle")
+    st.dataframe(df)
 
 df_comparatif_models = pd.DataFrame({
     "Modèle": [
