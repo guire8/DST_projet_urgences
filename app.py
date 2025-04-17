@@ -7,6 +7,7 @@ from random import randint
 from zoneinfo import ZoneInfo
 import plotly.express as px
 import plotly.graph_objects as go
+from PIL import Image
 from sklearn.metrics import (
     f1_score, recall_score, precision_score, accuracy_score,
     confusion_matrix, ConfusionMatrixDisplay
