@@ -108,7 +108,7 @@ def preprocess_for_hospitalisation(df, input_row):
 
 def preprocess_for_moyenne(df):
     df = preprocess_common(df.copy())
-    df = df[df['Annee'].isin([2023, 2024])]
+    df = df[df['Annee'].isin([2021,2022,2023, 2024])]
     duree_moyenne = df['Duree_totale_heure'].mean()
     if pd.api.types.is_timedelta64_dtype(duree_moyenne):
         return duree_moyenne.total_seconds() / 60
