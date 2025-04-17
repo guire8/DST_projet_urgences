@@ -318,8 +318,8 @@ with tab1:
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""
-            On constate qu'il n'y a pas de modification majeures sur les différents temps d'attente entre 2020-2024 et 2023-2024.
-            Par conséquent, noous décidons de ne travailler que sur le dataset 2023-2024 qui à moins de données manquantes.
+           Nous constatons qu'il n'y a pas de différences majeures sur les différentes durées entre 2020-2024 et 2023-2024.
+            Par conséquent, nous avons décidé de ne travailler que sur le dataset 2023-2024 qui a moins de données manquantes.
             """)
 
 
