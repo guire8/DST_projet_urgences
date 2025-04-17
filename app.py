@@ -317,6 +317,11 @@ with tab1:
     # Affichage dans Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
+     st.markdown("""
+            On constate qu'il n'y a pas de modification majeures sur les différents temps d'attente entre 2020-2024 et 2023-2024.
+            Par conséquent, noous décidons de ne travailler que sur le dataset 2023-2024 qui à moins de données manquantes.
+            """)
+
 
 def formulaire(df_base, form_key_prefix=""):
     date_entree = st.date_input("Date d'entrée", key=f"{form_key_prefix}_date_entree")
