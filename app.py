@@ -437,10 +437,7 @@ with tab2:
 
     # Affichage Image du Gradient Boosting Regressor
     image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
-    image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
-
-    ## Afficher l'image dans Streamlit
-    st.image(image_regression_plotting, caption="Image chargée avec PIL", use_container_width=True)
+    st.image(image_regression_plotting, use_container_width=True)
 
     # Tableau évaluation du modèle Gradient Boosting Regressor par échantillonage
     data = {
