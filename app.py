@@ -525,9 +525,8 @@ with tab2:
 
     # Affichage Image du Gradient Boosting Regressor
     st.write(type(Graphe_Hybride))
-    image_regression_plotting = Image.open("Images/Graphe_Hybride.png")
-    image_regression_plotting = Image.open("Images/Graphe_Hybride.png")
-    st.image(Graphe_Hybride, caption="Image chargée avec PIL", use_container_width=True)
+    image_Graphe_Hybride = Image.open("Images/Graphe_Hybride.png")
+    st.image(image_Graphe_Hybride, use_container_width=True)
 
 df_comparatif_models = pd.DataFrame({
     "Modèle": [
