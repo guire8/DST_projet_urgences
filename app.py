@@ -1385,10 +1385,26 @@ with tab4:
 
     fig.update_layout(
         title="📊 Durée moyenne de passage et affluence pour les paramètres sélectionnés",
-        xaxis=dict(title="Tranche horaire", tickmode="array", tickvals=df_plot["Heure_affichage"], ticktext=df_plot["Heure_affichage"], tickangle=0),
-        yaxis=dict(title="Durée moyenne (heure)"),
-        yaxis2=dict(title="Entrées moyennes", overlaying="y", side="right", range=[0, 8], layer="below traces"),
-        legend=dict(x=0.01, y=0.99),
+        xaxis=dict(
+            title="Tranche horaire",
+            tickmode="array",
+            tickvals=df_plot["Heure_affichage"],
+            ticktext=df_plot["Heure_affichage"],
+            tickangle=0
+        ),
+        yaxis=dict(
+            title="Durée moyenne (heure)",
+            rangemode="tozero",
+            autorange=True  
+        ),
+        yaxis2=dict(
+            title="Entrées moyennes",
+            overlaying="y",
+            side="right",
+            range=[0, 8],
+            layer="below traces"  
+        ),
+        legend=dict(x=-0.02, y=1.06),
         bargap=0.2,
         height=500,
         template="plotly_white"
