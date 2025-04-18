@@ -79,7 +79,7 @@ with tab1:
 
     # Motif de recours
     df_motif = df_cleaned[
-    df_cleaned["Motif_de_recours"].apply(lambda x: isinstance(x, str) and x.strip().lower() != "nan")]["Motif_de_recours"].value_counts().reset_index()
+    df_cleaned["Motif_de_recours"].apply(lambda x: isinstance(x, str) and x.strip().lower() != "nan")]["Motif_de_recours"].value_counts().reset_index().copy()
     df_motif.columns = ["Motif_de_recours", "count"]
     fig_motif = px.bar(
         df_motif,
@@ -106,7 +106,10 @@ with tab1:
     #Temps d'attente et variable 
     bins = [0, 18, 30, 60, 80, 120]
     labels = ['0-18', '19-30', '31-60', '61-80', '81-120']
-    df_cleaned['age'] = pd.cut(df_cleaned['Age_Moyen_Sejour_Annees'], bins=bins, labels=labels, right=True)
+    
+    # Copie pour ne pas impacter df_cleaned
+    df_graph = df_cleaned.copy()
+    df_graph['age'] = pd.cut(df_graph['Age_Moyen_Sejour_Annees'], bins=bins, labels=labels, right=True)
 
     colonnes_timedelta = [
         'Duree_totale_heure',
@@ -115,9 +118,10 @@ with tab1:
     ]
 
     for col in colonnes_timedelta:
-        df_cleaned[col] = pd.to_timedelta(df_cleaned[col], errors='coerce')
+        df_graph[col] = pd.to_timedelta(df_graph[col], errors='coerce')
 
-    df = df_cleaned[df_cleaned['Delai_entree_IOA_heure'] > pd.Timedelta(minutes=0)].copy()
+    # Nouveau DataFrame filtré pour les graphiques
+    df = df_graph[df_graph['Delai_entree_IOA_heure'] > pd.Timedelta(minutes=0)].copy()
 
     # Mapping pour les noms clairs dans l'interface
     categorie_options = {
@@ -506,7 +510,7 @@ with tab2:
 
     # Affichage Image du Gradient Boosting Regressor
     image_regression_plotting = Image.open("Images/Regression_models_plotting.png")
-    st.image(image_regression_plotting, use_container_width=True)
+    st.image(image_regression_plotting, width=1500)
 
     # Tableau évaluation du modèle Gradient Boosting Regressor par échantillonage
     data = {
@@ -524,9 +528,8 @@ with tab2:
     st.dataframe(df)
 
     # Affichage Image du Gradient Boosting Regressor
-    st.write(type(Graphe_Hybride))
     image_Graphe_Hybride = Image.open("Images/Graphe_Hybride.png")
-    st.image(image_Graphe_Hybride, use_container_width=True)
+    st.image(image_Graphe_Hybride, width=2000)
 
 df_comparatif_models = pd.DataFrame({
     "Modèle": [
