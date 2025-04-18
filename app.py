@@ -72,7 +72,7 @@ with tab1:
         x="Tri_IOA",
         y="count",
         title="Distribution du Tri_IOA",
-        color = 'Tri_IOA'
+        color = "Tri_IOA",
         color_discrete_sequence=px.colors.qualitative.T10,
     )
     fig_tri.update_layout(yaxis_title="Nombre de séjours")
@@ -569,12 +569,11 @@ df_stacking_results = pd.DataFrame({
 })
 
 df_final_stacking_results = pd.DataFrame({
-    "Modèle": ["Logistic Regression (Opt.)", "Random Forest (Opt.)", "Gradient Boosting (Opt.)", "XGBoost (Opt.)", "Stacking Final"],
-    "Accuracy": [0.75, 0.82, 0.83, 0.84, 0.87],
-    "Recall": [0.71, 0.78, 0.79, 0.80, 0.83],
-    "Precision": [0.69, 0.77, 0.78, 0.79, 0.81],
-    "F1-score": [0.70, 0.77, 0.78, 0.79, 0.82],
-    "AUC-ROC": [0.76, 0.85, 0.86, 0.87, 0.89]
+    "Modèle": ["gb_precision", "xgb_precision", "rf_recall", "xgb_recall", "lr_recall"],
+    "F1-score": [0.894, 0.887, 0.854, 0.853, 0.850],
+    "Recall": [0.851, 0.872, 0.884, 0.877, 0.879],
+    "Précision": [0.941, 0.903, 0.826, 0.831, 0.823],
+    "Accuracy": [0.899, 0.889, 0.849, 0.849, 0.845]
 })
 
 # --- Fonction d’affichage de tableau Plotly ---
