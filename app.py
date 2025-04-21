@@ -103,72 +103,72 @@ with tab1:
 
     st.plotly_chart(fig_motif, use_container_width=True)
 
-    #Temps d'attente et variable 
+        #Temps d'attente et variable 
     bins = [0, 18, 30, 60, 80, 120]
     labels = ['0-18', '19-30', '31-60', '61-80', '81-120']
     
     # Copie pour ne pas impacter df_cleaned
     df_graph = df_cleaned.copy()
-    df_graph['age'] = pd.cut(df_graph['Age_Moyen_Sejour_Annees'], bins=bins, labels=labels, right=True)
-    df_graph = df_graph[df_graph['Motif_de_recours'].astype(str).str.strip().str.lower() != "nan"]
-    df_graph = df_graph[df_graph['Tri_IOA'].astype(str).str.strip().str.lower() != "nan"]
 
-    colonnes_timedelta = [
-        'Duree_totale_heure',
-        'Delai_entree_IOA_heure',
-        'Delai_entree_MED_heure'
-    ]
+        # Sélection du type de délai à visualiser
+    delais = {
+        'Délai entre entrée et IOA (h)': 'Delai_entree_IOA_heure',
+        'Délai entre entrée et médecin (h)': 'Delai_entree_MED_heure',
+        'Durée totale (h)': 'Duree_totale_heure',
+    }
 
-    for col in colonnes_timedelta:
-        df_graph[col] = pd.to_timedelta(df_graph[col],unit='h', errors='coerce')
+    choix_delai = st.selectbox("Choisir le type de délai à visualiser :", list(delais.keys()))
+    colonne_duree = delais[choix_delai]
 
-
-    df_graph = df_graph[
-    df_graph['Duree_totale_heure'].notna() &
-    df_graph['Delai_entree_IOA_heure'].notna() &
-    df_graph['Delai_entree_MED_heure'].notna()
-]
-    # Nouveau DataFrame filtré pour les graphiques
-    df_graph = df_graph[
-    (df_graph['Duree_totale_heure'] > pd.Timedelta(minutes=0)) &
-    (df_graph['Duree_totale_heure'] < pd.Timedelta(hours=36)) &  
-
-    (df_graph['Delai_entree_IOA_heure'] > pd.Timedelta(minutes=0)) &
-    (df_graph['Delai_entree_IOA_heure'] < pd.Timedelta(hours=1, minutes=12)) & 
-
-    (df_graph['Delai_entree_MED_heure'] > pd.Timedelta(minutes=0)) &
-    (df_graph['Delai_entree_MED_heure'] < pd.Timedelta(hours=14, minutes=7))  
-]
-
-    # Mapping pour les noms clairs dans l'interface
+    # Préparation des catégories de regroupement
     categorie_options = {
         'Âge': 'age',
         'Tri IOA': 'Tri_IOA',
         'Motif de recours': 'Motif_de_recours'
     }
-    
-    categorie_affichee = st.selectbox("Choisir la variable de regroupement :", list(categorie_options.keys()))
-    categorie = categorie_options[categorie_affichee]
+    df_graph['age'] = pd.cut(df_graph['Age_Moyen_Sejour_Annees'], bins=bins, labels=labels, right=True)
 
-    delais = {
-        'Délai entre entrée et IOA (h)': 'Delai_entree_IOA_heure',
-        'Délai entre entrée et médecin (h)': 'Delai_entree_MED_heure',
-        'Durée totale (h)': 'Duree_totale_heure',}
+    # Nettoyage
+    df_graph = df_graph[df_graph['Motif_de_recours'].astype(str).str.strip().str.lower() != "nan"]
+    df_graph = df_graph[df_graph['Tri_IOA'].astype(str).str.strip().str.lower() != "nan"]
 
+    # Conversion en timedelta
+    colonnes_timedelta = ['Duree_totale_heure', 'Delai_entree_IOA_heure', 'Delai_entree_MED_heure']
+    for col in colonnes_timedelta:
+        df_graph[col] = pd.to_timedelta(df_graph[col], unit='h', errors='coerce')
 
-    for i, (titre, colonne) in enumerate(delais.items(), 1):
-        df_graph[colonne] = df_graph[colonne].dt.total_seconds() / 3600
+    # Filtrage des valeurs aberrantes
+    df_graph = df_graph[
+        df_graph['Duree_totale_heure'].notna() &
+        df_graph['Delai_entree_IOA_heure'].notna() &
+        df_graph['Delai_entree_MED_heure'].notna()
+    ]
+
+    df_graph = df_graph[
+        (df_graph['Duree_totale_heure'] > pd.Timedelta(minutes=0)) &
+        (df_graph['Duree_totale_heure'] < pd.Timedelta(hours=36)) &
+        (df_graph['Delai_entree_IOA_heure'] > pd.Timedelta(minutes=0)) &
+        (df_graph['Delai_entree_IOA_heure'] < pd.Timedelta(hours=1, minutes=12)) &
+        (df_graph['Delai_entree_MED_heure'] > pd.Timedelta(minutes=0)) &
+        (df_graph['Delai_entree_MED_heure'] < pd.Timedelta(hours=14, minutes=7))
+    ]
+
+    # Transformation de la colonne choisie en heures
+    df_graph[colonne_duree] = df_graph[colonne_duree].dt.total_seconds() / 3600
+
+    # Affichage des boxplots pour chaque variable de regroupement
+    for categorie_affichee, categorie in categorie_options.items():
         fig = px.box(
             df_graph,
             x=categorie,
-            y=colonne,
+            y=colonne_duree,
             points=False,
-            title=titre,
-            color_discrete_sequence=px.colors.qualitative.T10, 
+            title=f"{choix_delai} selon {categorie_affichee}",
+            color_discrete_sequence=px.colors.qualitative.T10,
             category_orders={
-        'age': ['0-18', '19-30', '31-60', '61-80', '81-120'], 
-        'Tri_IOA': ['Tri 1', 'Tri 2', 'Tri 3A', 'Tri 3B', 'Tri 4', 'Tri 5']
-    }
+                'age': ['0-18', '19-30', '31-60', '61-80', '81-120'],
+                'Tri_IOA': ['Tri 1', 'Tri 2', 'Tri 3A', 'Tri 3B', 'Tri 4', 'Tri 5']
+            }
         )
         fig.update_layout(
             xaxis_title=categorie_affichee,
@@ -178,7 +178,6 @@ with tab1:
         if categorie == 'Motif_de_recours':
             fig.update_layout(xaxis_tickangle=40)
         st.plotly_chart(fig, use_container_width=True)
-
 
     # 🔥 Carte thermique des arrivées - version améliorée
     st.subheader("2. Carte thermique des arrivées")
