@@ -539,7 +539,7 @@ with tab2:
     df = pd.DataFrame(data)
     
       # Affichage dans Streamlit
-    st.title("1 Comparaison des modèles de régression")
+    st.title("Comparaison des modèles de régression")
     st.dataframe(df, use_container_width=True)
 
     # Affichage Image du Gradient Boosting Regressor
@@ -558,16 +558,15 @@ with tab2:
     
     df = pd.DataFrame(data)
     
-    st.title("2 Modèle Hybride : Moyenne et Gradient Boosting Regressor")
-    st.title("    Gradient Boosting regressor par échantillonage")
+    st.title("Gradient Boosting regressor par échantillonage")
     st.dataframe(df)
 
     # Affichage Image du Gradient Boosting Regressor
-    st.title("    Graphe Modèle Mixte par échantionnage")
+    st.title("Graphe Modèle Mixte par échantionnage")
     image_Graphe_Hybride = Image.open("Images/Graphe_Hybride.png")
     st.image(image_Graphe_Hybride, width=2000)
 
-    st.title("3 Transformation Logarithmique")
+    st.title("Transformation Logarithmique")
     image_Log_transform = Image.open("Images/Log_transformation.png")
     st.image(image_Log_transform, width=2000)
     
