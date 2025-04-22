@@ -44,7 +44,23 @@ if "salle_ioa" not in st.session_state:
 if "salle_med" not in st.session_state:
     st.session_state["salle_med"] = np.random.randint(2, 15)
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Data Visualisation", "🤖 Temps de passage", "🏥 Hospitalisation", "📈 Estimation moyenne"])
+tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏁 Introduction", "📊 Data Visualisation", "🤖 Temps de passage", "🏥 Hospitalisation", "📈 Estimation moyenne", "🔚 Conclusion"])
+
+with tab0:
+    st.markdown("## 🎓 Présentation du projet")
+    st.write("""
+    Ce projet a été réalisé dans le cadre de notre formation en Data Science.  
+    L'objectif est de développer une application capable d'explorer des données issues d’un service d’urgences
+    et de prédire certains indicateurs clés à l’aide de modèles de machine learning.
+    """)
+
+    st.markdown("### 🎯 Objectifs")
+    st.write("- Explorer les données des passages aux urgences\n"
+             "- Prédire les temps de passage et les hospitalisations\n"
+             "- Proposer une estimation moyenne pour des cas simulés")
+
+    st.markdown("### 🛠️ Outils utilisés")
+    st.write("- Python, Pandas, Scikit-learn, Streamlit, etc.")  
 
 with tab1:
     st.title("📊 Analyse exploratoire des données urgences")
@@ -1429,3 +1445,42 @@ with tab4:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+with tab5:
+    st.markdown("## ✅ Conclusion")
+    st.write("""
+    Le projet a révélé des difficultés majeures liées à la qualité des données : trop peu de variables explicatives pertinentes, beaucoup de valeurs manquantes et peu de corrélations détectables.  
+    Cela a complexifié la modélisation des temps d’attente, malgré des efforts conséquents en nettoyage, visualisation, et tests de modèles (régression, classification, deep learning).  
+    \n
+    Nous avons aussi été confrontés à des limites techniques (puissance de calcul, gestion des dépendances, Git non maîtrisé), mais avons su y faire face en adaptant nos outils et notre organisation.
+    \n
+    Ce projet nous a permis de renforcer nos compétences en data science, en travaillant sur un cas réel, complexe, et en équipe. Nous avons surtout appris l’importance d’une bonne compréhension des données et d’un regard critique sur les modèles.
+    """)
+
+    st.markdown("## 🔧 Pistes d’amélioration")
+    st.write("""
+    Pour améliorer la performance des modèles :  
+
+    - Intégrer des variables cliniques (signes vitaux, symptômes, antécédents)  
+    - Ajouter des informations contextuelles (nombre de soignants, disponibilités de lits, contexte social)  
+    - S’inspirer des pratiques internationales (ex. : Québec) pour enrichir les tableaux de bord  
+    """)
+
+    st.markdown("## 🚀 Et après ?")
+    st.write("""
+    ✅ Le **graphique d'affluence** peut être utilisé sur le site de l’établissement ou dans la salle d’attente pour **informer les patients et réguler les flux**.  
+        Bien qu'il ne s'agisse pas d'un modèle de machine learning prédictif, il permet d'avoir une **visualisation statistique** des temps d'attente ajusté sur la date qui peut aider à **réguler les flux et contribuer à l'amélioration de la satisfaction des patients**.
+
+    📊 Le **modèle de prédiction des temps d'attente** et le **modèle de prédiction d’hospitalisation**, nécessitent d'être améliorés pour une future **intégration métier**.  
+        Ils permettraient de communiquer des **temps d'attente ajustés à chaque patient**, d’**anticiper les besoins en lits** et d’**optimiser les parcours patients**.
+
+    Pour une mise en production réussie :
+    - **Alimentation en temps réel** des données depuis les SI hospitaliers (requêtes SQL, dépôt de fichiers)
+    - **Intégration dans un outil sécurisé** (intranet, portail décisionnel, flux HL7 vers le DPI)
+    - **Suivi régulier des performances** des modèles
+    - **Maintenance technique** : mise à jour des bibliothèques, gestion des accès, surveillance des erreurs
+
+    👉 Une **présentation du projet sera organisée auprès du service des urgences** afin de **sensibiliser les équipes à l’importance de la qualité des données** et d’**encourager une meilleure complétude des saisies**, indispensable à l’efficacité des modèles prédictifs.  
+    
+    Ce projet pose les bases d’un outil décisionnel utile aux urgences, à condition de poursuivre l’amélioration des données et des modèles.
+    """)
