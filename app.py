@@ -67,7 +67,7 @@ with tab0:
 
 
         st.markdown("### 🤝 Alignement d’équipe et vision partagée")
-        st.markdown("- Mise en place d’un **vision board** dès la première réunion pour :\n"
+        st.markdown("- Mise en place d’un **vision boat** dès la première réunion pour :\n"
             "    - Clarifier les objectifs individuels et collectifs\n"
             "    - Donner du sens au projet\n"
             "    - Créer une dynamique de groupe motivante et alignée")
