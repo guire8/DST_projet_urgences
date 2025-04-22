@@ -6,3 +6,4 @@ scikit-learn
 openpyxl
 holidays
 joblib
+xgboost==2.1.4

@@ -47,20 +47,62 @@ if "salle_med" not in st.session_state:
 tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏁 Introduction", "📊 Data Visualisation", "🤖 Temps de passage", "🏥 Hospitalisation", "📈 Estimation moyenne", "🔚 Conclusion"])
 
 with tab0:
-    st.markdown("## 🎓 Présentation du projet")
-    st.write("""
-    Ce projet a été réalisé dans le cadre de notre formation en Data Science.  
-    L'objectif est de développer une application capable d'explorer des données issues d’un service d’urgences
-    et de prédire certains indicateurs clés à l’aide de modèles de machine learning.
-    """)
+    st.header("💡 Présentation du projet")
+    
+    subtab1, subtab2 = st.tabs(["👥 L'équipe et la vision", "🏥 Données & parcours patient"])
 
-    st.markdown("### 🎯 Objectifs")
-    st.write("- Explorer les données des passages aux urgences\n"
-             "- Prédire les temps de passage et les hospitalisations\n"
-             "- Proposer une estimation moyenne pour des cas simulés")
+    with subtab1:
+        st.markdown("### 🎯 Les membres du groupe et leurs objectifs")
+        st.markdown("- **Marine** : souhaite travailler comme *Data Analyst/Scientist* dans le domaine médical – ce projet illustre bien les missions possibles dans ce secteur.")
+        st.markdown("- **Pascal** : en reconversion professionnelle, il vise un poste de consultant en amélioration continue, en s’appuyant sur les outils de la data.")
+        st.markdown("- **Rémi** : chef de projet informatique dans un hôpital, il veut intégrer l’analyse de données dans son environnement professionnel et mettre en œuvre concrètement ce projet au GHPSO.")
+        st.markdown("- **Cansu** : également en reconversion professionnelle, elle souhaite devenir *Data Analyst* dans son établissement actuel.")
 
-    st.markdown("### 🛠️ Outils utilisés")
-    st.write("- Python, Pandas, Scikit-learn, Streamlit, etc.")  
+        
+        st.markdown("### 🔍 Sources d’inspiration et analyse de pratiques externes")
+        st.markdown("- Observation de bonnes pratiques dans d’autres structures de santé :\n"
+            "    - Des établissements comme l’**AP-HP** ou la **Clinique Saint Martin à Caen** affichent déjà le temps d’attente sur leur site.\n"
+            "    - Nous avons aussi étudié les indicateurs utilisés au **Québec**, très détaillés, mais difficilement exploitables ici en l’absence de certaines données.\n"
+            "    - La **Cour des comptes**, dans son rapport de novembre 2024 sur *“L’accueil et le traitement des urgences à l’hôpital”*, recommande d’ailleurs de s’inspirer des pratiques de la médecine d’urgence québécoise.")
+
+
+        st.markdown("### 🤝 Alignement d’équipe et vision partagée")
+        st.markdown("- Mise en place d’un **vision board** dès la première réunion pour :\n"
+            "    - Clarifier les objectifs individuels et collectifs\n"
+            "    - Donner du sens au projet\n"
+            "    - Créer une dynamique de groupe motivante et alignée")
+
+    with subtab2:
+        st.markdown("### 🧭 Parcours d’un patient aux urgences")
+        st.markdown("1. Accueil par l’**IOA** (*Infirmier·e d’Orientation et d’Accueil*)")
+        st.markdown("2. **TRI** (évaluation du niveau de gravité)")
+        st.markdown("3. Passage devant le **médecin**")
+        st.markdown("4. Orientation vers la **sortie** ou vers une **hospitalisation**")
+
+        st.markdown("### 📦 Contenu du jeu de données")
+        st.markdown("- Heures d’entrée et de sortie aux urgences")
+        st.markdown("- Temps d’attente à chaque étape (IOA, consultation médicale…)")
+        st.markdown("- Informations sur les patients : âge, motif de venue, discipline médicale")
+        st.markdown("- Niveau de gravité via la colonne **Tri IOA**")
+
+        st.markdown("### ⚠️ Problèmes identifiés lors de l’analyse")
+        st.markdown("- Valeurs manquantes ou incohérentes (ex : âges extrêmes, `#VALEURMULTI`)")
+        st.markdown("- Formats de dates non uniformes")
+
+        st.markdown("### 🧹 Nettoyage et préparation des données")
+        st.markdown("- Uniformisation des colonnes")
+        st.markdown("- Conversion des dates au format `datetime`")
+        st.markdown("- Suppression des valeurs aberrantes")
+        st.markdown("- Création de nouvelles variables (ex : délais entre chaque étape)")
+
+        st.markdown("### 📊 Tendances dégagées (analyse exploratoire)")
+        st.markdown("- Le temps passé aux urgences varie selon :\n"
+            "    - Le **niveau de tri IOA**\n"
+            "    - La **discipline médicale**\n"
+            "    - Le **motif de venue**")
+        st.markdown("- Pics d’affluence identifiés :\n"
+            "  - À certaines **heures de la journée**\n"
+            "  - À certains **jours de la semaine**")
 
 with tab1:
     st.title("📊 Analyse exploratoire des données urgences")
@@ -614,11 +656,11 @@ df_stacking_results = pd.DataFrame({
 })
 
 df_final_stacking_results = pd.DataFrame({
-    "Modèle": ["gb_precision", "xgb_precision", "rf_recall", "xgb_recall", "lr_recall"],
-    "F1-score": [0.894, 0.887, 0.854, 0.853, 0.850],
-    "Recall": [0.851, 0.872, 0.884, 0.877, 0.879],
-    "Précision": [0.941, 0.903, 0.826, 0.831, 0.823],
-    "Accuracy": [0.899, 0.889, 0.849, 0.849, 0.845]
+    "Modèle": ["xgb_recall", "gb_recall", "xgb_precision", "lr_precision", "rf_precision", "rf_recall"],
+    "3e colonne": [0.490, 0.472, 0.467, 0.465, 0.460, 0.418],
+    "Recall": [0.434, 0.400, 0.396, 0.392, 0.375, 0.312],
+    "Précision": [0.562, 0.577, 0.568, 0.572, 0.592, 0.633],
+    "Accuracy": [0.840, 0.842, 0.839, 0.840, 0.843, 0.846]
 })
 
 # --- Fonction d’affichage de tableau Plotly ---
@@ -973,8 +1015,8 @@ def objective(trial):
         third_model = GradientBoostingClassifier(n_estimators=200, max_depth=10, learning_rate=0.1, random_state=42)
 
     estimators = [
-        ("gb", gb_best_recall),
         ("lr", lr_best_precision),
+        ("gb", gb_best_recall),
         ("third", third_model)
     ]
 
@@ -1019,6 +1061,50 @@ print(df_results)
 
 print("Meilleure combinaison :")
 print(study.best_trial.params)
+'''
+code_thresholds_optimization = '''
+# Création du Stacking
+stacking_model = StackingClassifier(
+    estimators=[
+        ("logreg_recall", logreg_recall),
+        ("gb_precision", gb_precision),
+        ("xgb_recall", xgb_recall)
+    ],
+    final_estimator=final_mlp,
+    stack_method="predict_proba",  # On transmet les probabilités aux modèles de base
+    passthrough=False,
+    n_jobs=-1
+)
+
+# ------------------------------------------------------------------------------
+# Entraînement du modèle de Stacking
+stacking_model.fit(X_train_transformed, y_train)
+
+# ------------------------------------------------------------------------------
+# Recherche du seuil optimal avec calcul des métriques (F1, Recall, Precision, Accuracy)
+
+# On obtient les probabilités prédites pour la classe positive
+y_proba = stacking_model.predict_proba(X_test_transformed)[:, 1]
+
+# Création d'une grille de seuils de 0.0 à 1.0 par pas de 0.01
+thresholds = np.arange(0.0, 1.01, 0.01)
+results = []
+
+for t in thresholds:
+    y_pred_temp = (y_proba >= t).astype(int)
+    f1 = f1_score(y_test, y_pred_temp)
+    rec = recall_score(y_test, y_pred_temp)
+    prec = precision_score(y_test, y_pred_temp)
+    acc = accuracy_score(y_test, y_pred_temp)
+    results.append((t, f1, rec, prec, acc))
+
+# Trier les résultats par F1 score décroissant
+results_sorted = sorted(results, key=lambda x: x[1], reverse=True)
+
+print("\n🔎 Top 20 des seuils basés sur le F1-score (avec Recall, Precision et Accuracy) :")
+print("Rank\tSeuil\tF1 Score\tRecall\tPrecision\tAccuracy")
+for i, (thr, f1_val, rec_val, prec_val, acc_val) in enumerate(results_sorted[:20], start=1):
+    print(f"{i}\t{thr:.2f}\t{f1_val:.3f}\t\t{rec_val:.3f}\t{prec_val:.3f}\t\t{acc_val:.3f}")
 '''
 
 # --- Affichage de l’onglet Présentation ---
@@ -1103,6 +1189,12 @@ with tab3:
         with st.expander("Voir le code"):
             st.code(code_final_optimization, language="python")
         show_table_plotly(df_final_stacking_results, "Comparaison finale des modèles optimisés")
+        st.markdown("""
+        Meilleure combinaison = xgb_recall.  
+        On réentraine ensuite le stacking avec les meilleurs paramètres et on fait une recherche de seuil pour trouver celui donnant les meilleurs résultats.
+        """)
+        with st.expander("Voir le code"):
+            st.code(code_thresholds_optimization, language="python")
 
         st.markdown("### 📋 Analyse des résultats")
         st.markdown("""
