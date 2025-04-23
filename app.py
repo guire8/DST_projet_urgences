@@ -44,7 +44,7 @@ if "salle_ioa" not in st.session_state:
 if "salle_med" not in st.session_state:
     st.session_state["salle_med"] = np.random.randint(2, 15)
 
-tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏁 Introduction", "📊 Data Visualisation", "🤖 Temps de passage", "🏥 Hospitalisation", "📈 Estimation moyenne", "🔚 Conclusion"])
+tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏁 Introduction", "📊 Data Visualisation", "📈 Estimation moyenne", "🤖 Temps de passage", "🏥 Hospitalisation" , "🔚 Conclusion"])
 
 with tab0:
     st.header("💡 Présentation du projet")
@@ -284,16 +284,12 @@ with tab1:
     cor = numeric_df.corr(method='spearman')
     mask = np.tril(np.ones_like(cor, dtype=bool))
     cor_masked = cor.where(mask)
-    fig = px.imshow(cor_masked, aspect="auto", title="Matrice de corrélation", color_continuous_scale="RdBu")
+    fig = px.imshow(cor_masked, aspect="auto", title="Matrice de corrélation", color_continuous_scale="RdBu_r")
 
     st.plotly_chart(fig, use_container_width=True)
 
     
     st.subheader("4. Analyse des valeurs manquantes")
-    missing = df_raw.isnull().mean().sort_values(ascending=False).reset_index()
-    missing.columns = ["Colonne", "Taux de valeurs manquantes"]
-    fig_missing = px.bar(missing, x="Colonne", y="Taux de valeurs manquantes", title="Taux de valeurs manquantes")
-    st.plotly_chart(fig_missing)
 
     import plotly.graph_objects as go
 
@@ -472,7 +468,167 @@ with tab1:
             Par conséquent, nous avons décidé de ne travailler que sur le dataset 2023-2024 qui a moins de données manquantes.
             """)
 
+with tab2:
+    st.title("📈 Estimation simple par moyenne")
 
+    df_moy = preprocess_common(df_raw.copy())
+    from zoneinfo import ZoneInfo
+
+    # Conversion forcée UTC → Europe/Paris
+    df_moy["Date_Heure_Entree_Sejour"] = pd.to_datetime(df_moy["Date_Heure_Entree_Sejour"], utc=True)
+    df_moy["Date_Heure_Entree_Sejour"] = df_moy["Date_Heure_Entree_Sejour"].dt.tz_convert("Europe/Paris")
+
+    # Recalcul de l'heure locale pour les graphes
+    df_moy["Heure_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.hour
+
+    jour_mapping = {
+        "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
+        "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"
+    }
+    
+    import holidays
+    fr_holidays = holidays.FR()
+    df_moy["Date"] = df_moy["Date_Heure_Entree_Sejour"].dt.day
+    df_moy["Mois"] = df_moy["Date_Heure_Entree_Sejour"].dt.month
+    df_moy["jour_ferie"] = df_moy["Date_Heure_Entree_Sejour"].dt.date.isin(fr_holidays).astype(int)
+    df_moy["Jour_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.day_name().map(jour_mapping)
+
+    nb_jours = df_moy["Date_Heure_Entree_Sejour"].dt.date.nunique()
+
+    now = datetime.now(ZoneInfo("Europe/Paris"))
+
+    jour_defaut = jour_mapping[now.strftime("%A")]
+    date_defaut = now.day
+    mois_defaut = now.month
+    heure_defaut = now.hour
+
+    st.subheader("🧪 Estimation personnalisée")
+
+    afficher_outliers = st.toggle("Afficher les outliers", value=False, key="toggle_outliers_tab4")
+
+    col1, col2, col3, col4 = st.columns(4)
+    jours_dispos = sorted(df_moy["Jour_Entree"].dropna().unique())
+    dates_dispos = sorted(df_moy["Date"].dropna().unique())
+    mois_dispos = sorted(df_moy["Mois"].dropna().unique())
+    heures_dispos = sorted(df_moy["Heure_Entree"].dropna().unique())
+
+    jour = col1.selectbox("Jour", jours_dispos, index=jours_dispos.index(jour_defaut))
+    date = col2.selectbox("Date (n° jour)", dates_dispos, index=dates_dispos.index(date_defaut))
+    mois = col3.selectbox("Mois", mois_dispos, index=mois_dispos.index(mois_defaut))
+    heure = col4.selectbox("Heure", heures_dispos, index=heures_dispos.index(heure_defaut))
+
+    def remove_outliers_iqr(df, columns, iqr_multiplier=3):
+        df_filtered = df.copy()
+        for col in columns:
+            q1 = df_filtered[col].quantile(0.25)
+            q3 = df_filtered[col].quantile(0.75)
+            iqr = q3 - q1
+            upper_bound = q3 + iqr_multiplier * iqr
+            df_filtered = df_filtered[
+                (df_filtered[col] >= 0) & (df_filtered[col] <= upper_bound)
+            ]
+        return df_filtered
+
+    def calcul_moyennes_indicateurs(df, jour, date, mois, outliers=False):
+        df_filtre = df[
+            (df["Jour_Entree"] == jour) |
+            (df["Date"] == date) |
+            (df["Mois"] == mois) |
+            (df["jour_ferie"] == 1)
+        ]
+        if not outliers:
+            df_filtre = remove_outliers_iqr(df_filtre, [
+                "Delai_entree_IOA_heure",
+                "Delai_entree_MED_heure",
+                "Duree_totale_heure"
+            ])
+        return {
+            "IOA_moy": df_filtre["Delai_entree_IOA_heure"].mean(),
+            "IOA_std": df_filtre["Delai_entree_IOA_heure"].std(),
+            "MED_moy": df_filtre["Delai_entree_MED_heure"].mean(),
+            "MED_std": df_filtre["Delai_entree_MED_heure"].std(),
+            "TOT_moy": df_filtre["Duree_totale_heure"].mean(),
+            "TOT_std": df_filtre["Duree_totale_heure"].std(),
+            "filtered_df": df_filtre
+        }
+
+    res = calcul_moyennes_indicateurs(df_moy, jour, date, mois, afficher_outliers)
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("🩺 IOA", f"{int(res['IOA_moy']*60)} ± {int(res['IOA_std']*60)} min")
+    col2.metric("👨‍⚕️ Médecin", f"{int(res['MED_moy'])} ± {int(res['MED_std'])} heures")
+    col3.metric("🚪 Sortie", f"{int(res['TOT_moy'])} ± {int(res['TOT_std'])} heures")
+
+    # Données affluence non filtrées
+    df_affluence = df_moy.groupby("Heure_Entree").agg(
+        Moy_arrivees=("Duree_totale_heure", "size")
+    ).reset_index()
+    df_affluence["Moy_arrivees"] = df_affluence["Moy_arrivees"] / nb_jours
+
+    # Données durées filtrées
+    df_graph = res["filtered_df"].dropna(subset=["Duree_totale_heure"])
+    df_duree = df_graph.groupby("Heure_Entree").agg(
+        Duree_moy_min=("Duree_totale_heure", lambda x: x.mean())
+    ).reset_index()
+
+    # Fusion
+    df_plot = pd.merge(df_duree, df_affluence, on="Heure_Entree", how="left")
+    df_plot["Heure_affichage"] = df_plot["Heure_Entree"].astype(int).astype(str) + "h-" + (df_plot["Heure_Entree"] + 1).astype(int).astype(str) + "h"
+
+    import plotly.graph_objects as go
+    couleurs_barres = ["#003f7f" if h == heure else "lightblue" for h in df_plot["Heure_Entree"]]
+
+    fig = go.Figure()
+
+    # Barres d’affluence
+    fig.add_trace(go.Bar(
+        x=df_plot["Heure_affichage"],
+        y=df_plot["Moy_arrivees"],
+        name="Arrivées moyennes",
+        marker=dict(color=couleurs_barres),
+        yaxis="y2",
+        opacity=0.8,
+        legendrank=2
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=df_plot["Heure_affichage"],
+        y=df_plot["Duree_moy_min"],
+        mode="lines+markers",
+        name="Durée moyenne (heure)",
+        line=dict(color="crimson", width=3),
+        legendrank=1
+    ))
+
+    fig.update_layout(
+        title="📊 Durée moyenne de passage et affluence pour les paramètres sélectionnés",
+        xaxis=dict(
+            title="Tranche horaire",
+            tickmode="array",
+            tickvals=df_plot["Heure_affichage"],
+            ticktext=df_plot["Heure_affichage"],
+            tickangle=0
+        ),
+        yaxis=dict(
+            title="Durée moyenne (heure)",
+            rangemode="tozero",
+            autorange=True  
+        ),
+        yaxis2=dict(
+            title="Entrées moyennes",
+            overlaying="y",
+            side="right",
+            range=[0, 8],
+            layer="below traces"  
+        ),
+        legend=dict(x=-0.02, y=1.06),
+        bargap=0.2,
+        height=500,
+        template="plotly_white"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+    
 def formulaire(df_base, form_key_prefix=""):
     date_entree = st.date_input("Date d'entrée", key=f"{form_key_prefix}_date_entree")
     heure_entree = st.time_input("Heure d'entrée", key=f"{form_key_prefix}_heure_entree")
@@ -512,7 +668,7 @@ def formulaire(df_base, form_key_prefix=""):
         "Salle_attente_MED": salle_med,
     }
 
-with tab2:
+with tab3:
     st.title("⏱️ Prédiction du temps de passage total")
 
     with st.form("form_temps_attente"):
@@ -1108,7 +1264,7 @@ for i, (thr, f1_val, rec_val, prec_val, acc_val) in enumerate(results_sorted[:20
 '''
 
 # --- Affichage de l’onglet Présentation ---
-with tab3:
+with tab4:
     st.title("🏥 Prédiction du risque d'hospitalisation")
     onglet_presentation, onglet_resultats, onglet_test = st.tabs(["🧠 Présentation du modèle", "📊 Résultats du modèle", "✪ Test en conditions réelles"])
 
@@ -1384,167 +1540,6 @@ with tab3:
                 unsafe_allow_html=True
             )
 
-
-with tab4:
-    st.title("📈 Estimation simple par moyenne")
-
-    df_moy = preprocess_common(df_raw.copy())
-    from zoneinfo import ZoneInfo
-
-    # Conversion forcée UTC → Europe/Paris
-    df_moy["Date_Heure_Entree_Sejour"] = pd.to_datetime(df_moy["Date_Heure_Entree_Sejour"], utc=True)
-    df_moy["Date_Heure_Entree_Sejour"] = df_moy["Date_Heure_Entree_Sejour"].dt.tz_convert("Europe/Paris")
-
-    # Recalcul de l'heure locale pour les graphes
-    df_moy["Heure_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.hour
-
-    jour_mapping = {
-        "Monday": "Lundi", "Tuesday": "Mardi", "Wednesday": "Mercredi",
-        "Thursday": "Jeudi", "Friday": "Vendredi", "Saturday": "Samedi", "Sunday": "Dimanche"
-    }
-    
-    import holidays
-    fr_holidays = holidays.FR()
-    df_moy["Date"] = df_moy["Date_Heure_Entree_Sejour"].dt.day
-    df_moy["Mois"] = df_moy["Date_Heure_Entree_Sejour"].dt.month
-    df_moy["jour_ferie"] = df_moy["Date_Heure_Entree_Sejour"].dt.date.isin(fr_holidays).astype(int)
-    df_moy["Jour_Entree"] = df_moy["Date_Heure_Entree_Sejour"].dt.day_name().map(jour_mapping)
-
-    nb_jours = df_moy["Date_Heure_Entree_Sejour"].dt.date.nunique()
-
-    now = datetime.now(ZoneInfo("Europe/Paris"))
-
-    jour_defaut = jour_mapping[now.strftime("%A")]
-    date_defaut = now.day
-    mois_defaut = now.month
-    heure_defaut = now.hour
-
-    st.subheader("🧪 Estimation personnalisée")
-
-    afficher_outliers = st.toggle("Afficher les outliers", value=False, key="toggle_outliers_tab4")
-
-    col1, col2, col3, col4 = st.columns(4)
-    jours_dispos = sorted(df_moy["Jour_Entree"].dropna().unique())
-    dates_dispos = sorted(df_moy["Date"].dropna().unique())
-    mois_dispos = sorted(df_moy["Mois"].dropna().unique())
-    heures_dispos = sorted(df_moy["Heure_Entree"].dropna().unique())
-
-    jour = col1.selectbox("Jour", jours_dispos, index=jours_dispos.index(jour_defaut))
-    date = col2.selectbox("Date (n° jour)", dates_dispos, index=dates_dispos.index(date_defaut))
-    mois = col3.selectbox("Mois", mois_dispos, index=mois_dispos.index(mois_defaut))
-    heure = col4.selectbox("Heure", heures_dispos, index=heures_dispos.index(heure_defaut))
-
-    def remove_outliers_iqr(df, columns, iqr_multiplier=3):
-        df_filtered = df.copy()
-        for col in columns:
-            q1 = df_filtered[col].quantile(0.25)
-            q3 = df_filtered[col].quantile(0.75)
-            iqr = q3 - q1
-            upper_bound = q3 + iqr_multiplier * iqr
-            df_filtered = df_filtered[
-                (df_filtered[col] >= 0) & (df_filtered[col] <= upper_bound)
-            ]
-        return df_filtered
-
-    def calcul_moyennes_indicateurs(df, jour, date, mois, outliers=False):
-        df_filtre = df[
-            (df["Jour_Entree"] == jour) |
-            (df["Date"] == date) |
-            (df["Mois"] == mois) |
-            (df["jour_ferie"] == 1)
-        ]
-        if not outliers:
-            df_filtre = remove_outliers_iqr(df_filtre, [
-                "Delai_entree_IOA_heure",
-                "Delai_entree_MED_heure",
-                "Duree_totale_heure"
-            ])
-        return {
-            "IOA_moy": df_filtre["Delai_entree_IOA_heure"].mean(),
-            "IOA_std": df_filtre["Delai_entree_IOA_heure"].std(),
-            "MED_moy": df_filtre["Delai_entree_MED_heure"].mean(),
-            "MED_std": df_filtre["Delai_entree_MED_heure"].std(),
-            "TOT_moy": df_filtre["Duree_totale_heure"].mean(),
-            "TOT_std": df_filtre["Duree_totale_heure"].std(),
-            "filtered_df": df_filtre
-        }
-
-    res = calcul_moyennes_indicateurs(df_moy, jour, date, mois, afficher_outliers)
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("🩺 IOA", f"{int(res['IOA_moy']*60)} ± {int(res['IOA_std']*60)} min")
-    col2.metric("👨‍⚕️ Médecin", f"{int(res['MED_moy'])} ± {int(res['MED_std'])} heures")
-    col3.metric("🚪 Sortie", f"{int(res['TOT_moy'])} ± {int(res['TOT_std'])} heures")
-
-    # Données affluence non filtrées
-    df_affluence = df_moy.groupby("Heure_Entree").agg(
-        Moy_arrivees=("Duree_totale_heure", "size")
-    ).reset_index()
-    df_affluence["Moy_arrivees"] = df_affluence["Moy_arrivees"] / nb_jours
-
-    # Données durées filtrées
-    df_graph = res["filtered_df"].dropna(subset=["Duree_totale_heure"])
-    df_duree = df_graph.groupby("Heure_Entree").agg(
-        Duree_moy_min=("Duree_totale_heure", lambda x: x.mean())
-    ).reset_index()
-
-    # Fusion
-    df_plot = pd.merge(df_duree, df_affluence, on="Heure_Entree", how="left")
-    df_plot["Heure_affichage"] = df_plot["Heure_Entree"].astype(int).astype(str) + "h-" + (df_plot["Heure_Entree"] + 1).astype(int).astype(str) + "h"
-
-    import plotly.graph_objects as go
-    couleurs_barres = ["#003f7f" if h == heure else "lightblue" for h in df_plot["Heure_Entree"]]
-
-    fig = go.Figure()
-
-    # Barres d’affluence
-    fig.add_trace(go.Bar(
-        x=df_plot["Heure_affichage"],
-        y=df_plot["Moy_arrivees"],
-        name="Arrivées moyennes",
-        marker=dict(color=couleurs_barres),
-        yaxis="y2",
-        opacity=0.8,
-        legendrank=2
-    ))
-
-    fig.add_trace(go.Scatter(
-        x=df_plot["Heure_affichage"],
-        y=df_plot["Duree_moy_min"],
-        mode="lines+markers",
-        name="Durée moyenne (heure)",
-        line=dict(color="crimson", width=3),
-        legendrank=1
-    ))
-
-    fig.update_layout(
-        title="📊 Durée moyenne de passage et affluence pour les paramètres sélectionnés",
-        xaxis=dict(
-            title="Tranche horaire",
-            tickmode="array",
-            tickvals=df_plot["Heure_affichage"],
-            ticktext=df_plot["Heure_affichage"],
-            tickangle=0
-        ),
-        yaxis=dict(
-            title="Durée moyenne (heure)",
-            rangemode="tozero",
-            autorange=True  
-        ),
-        yaxis2=dict(
-            title="Entrées moyennes",
-            overlaying="y",
-            side="right",
-            range=[0, 8],
-            layer="below traces"  
-        ),
-        legend=dict(x=-0.02, y=1.06),
-        bargap=0.2,
-        height=500,
-        template="plotly_white"
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
 
 with tab5:
     st.markdown("## ✅ Conclusion")
