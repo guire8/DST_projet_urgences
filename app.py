@@ -813,10 +813,10 @@ df_stacking_results = pd.DataFrame({
 
 df_final_stacking_results = pd.DataFrame({
     "Modèle": ["xgb_recall", "gb_recall", "xgb_precision", "lr_precision", "rf_precision", "rf_recall"],
-    "3e colonne": [0.490, 0.472, 0.467, 0.465, 0.460, 0.418],
-    "Recall": [0.434, 0.400, 0.396, 0.392, 0.375, 0.312],
-    "Précision": [0.562, 0.577, 0.568, 0.572, 0.592, 0.633],
-    "Accuracy": [0.840, 0.842, 0.839, 0.840, 0.843, 0.846]
+    "F1 Score": [0.553, 0.472, 0.467, 0.465, 0.460, 0.418],
+    "Recall": [0.450, 0.400, 0.396, 0.392, 0.375, 0.312],
+    "Précision": [0.681, 0.577, 0.568, 0.572, 0.592, 0.633],
+    "Accuracy": [0.871, 0.842, 0.839, 0.840, 0.843, 0.846]
 })
 
 # --- Fonction d’affichage de tableau Plotly ---
@@ -1131,17 +1131,16 @@ print(search.best_params_)
 '''
 code_final_optimization = '''
 # Modèles fixes
-gb_best_recall = GradientBoostingClassifier(
+gb_precision = GradientBoostingClassifier(
     n_estimators=200,
     max_depth=10,
-    learning_rate=0.01,
+    learning_rate=0.1,
     random_state=42
 )
 
-lr_best_precision = LogisticRegression(
+lr_recall = LogisticRegression(
     solver='liblinear',
     C=0.001,
-    max_iter=500,
     random_state=42
 )
 
@@ -1157,7 +1156,7 @@ best_mlp = MLPClassifier(
 
 def objective(trial):
     # Sélection du 3e modèle à tester
-    third_model_name = trial.suggest_categorical("third_model", ["rf_recall", "xgb_recall", "xgb_precision", "lr_recall", "gb_precision"])
+    third_model_name = trial.suggest_categorical("third_model", ["rf_recall", "xgb_recall", "xgb_precision", "lr_precision", "gb_recall"])
 
     if third_model_name == "rf_recall":
         third_model = RandomForestClassifier(n_estimators=200, max_depth=15, class_weight="balanced", random_state=42)
@@ -1165,14 +1164,14 @@ def objective(trial):
         third_model = XGBClassifier(n_estimators=50, max_depth=3, learning_rate=0.1, scale_pos_weight=1.0, use_label_encoder=False, eval_metric="logloss", random_state=42)
     elif third_model_name == "xgb_precision":
         third_model = XGBClassifier(n_estimators=200, max_depth=10, learning_rate=0.2, scale_pos_weight=1.0, eval_metric="logloss", random_state=42)
-    elif third_model_name == "lr_recall":
+    elif third_model_name == "lr_precision":
         third_model = LogisticRegression(solver='liblinear', C=0.001, max_iter=500, random_state=42)
-    elif third_model_name == "gb_precision":
-        third_model = GradientBoostingClassifier(n_estimators=200, max_depth=10, learning_rate=0.1, random_state=42)
+    elif third_model_name == "gb_recall":
+        third_model = GradientBoostingClassifier(n_estimators=200, max_depth=10, learning_rate=0.01, random_state=42)
 
     estimators = [
-        ("lr", lr_best_precision),
-        ("gb", gb_best_recall),
+        ("lr", lr_recall),
+        ("gb", gb_precision),
         ("third", third_model)
     ]
 
@@ -1205,7 +1204,7 @@ results = []
 for t in study.trials:
     if t.values:
         results.append({
-            "Modèle 3e colonne": t.user_attrs.get("third_model"),
+            "3ème modèle": t.user_attrs.get("third_model"),
             "F1-score": round(t.user_attrs.get("f1", 0), 3),
             "Recall": round(t.user_attrs.get("recall", 0), 3),
             "Précision": round(t.user_attrs.get("precision", 0), 3),
@@ -1222,12 +1221,12 @@ code_thresholds_optimization = '''
 # Création du Stacking
 stacking_model = StackingClassifier(
     estimators=[
-        ("logreg_recall", logreg_recall),
+        ("lr_recall", lr_recall),
         ("gb_precision", gb_precision),
         ("xgb_recall", xgb_recall)
     ],
     final_estimator=final_mlp,
-    stack_method="predict_proba",  # On transmet les probabilités aux modèles de base
+    stack_method="predict_proba",
     passthrough=False,
     n_jobs=-1
 )
